@@ -1,0 +1,126 @@
+---
+title: "HuynhSinghviFinal2"
+author: "Aaron Huynh"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r message=FALSE}
+#PACKAGES
+library(Stat2Data)
+library(leaps)
+library(HH)
+library(readr)
+```
+
+## DATA
+
+```{r message=FALSE}
+stats = read_csv("csv/nba_team_stats_00_to_21.csv")
+stats = stats[-c(1:7,9:17,20:21,28,29)]
+```
+
+## SCATTERPLOT MATRIX
+
+```{r out.width="400px"}
+pairs(stats, pch=20)
+```
+
+## ORIGINAL MODEL
+
+```{r message=FALSE}
+#ORIGINAL MODEL
+full=lm(PTS~.,data=stats)
+summary(full)
+```
+
+## ORIGINAL MODEL SUMMARY
+
+PTS = 16.79631 + 0.17396(OREB) + 2.11536(DREB) - 0.95330(TOV) + 1.84086(STL) - 0.28658(BLK) - 0.42277(BLKA) + 0.71571(PF) + 0.21474(PFD)
+
+
+Max Residual: 13.0809
+
+Median Residual: -0.0344
+
+Min Residual: -11.8620
+
+Adjusted R-squared:  0.6642
+
+## FORWARD SELECTION
+
+```{r}
+#FORWARD
+none=lm(PTS~1,data=stats)
+MSE=(summary(full)$sigma^2)
+model = step(none,scope=list(upper=full),scale=MSE,direction="forward")
+qqnorm(model$residuals)
+summary(model)
+```
+
+## FORWARD SELECTION SUMMARY
+
+PTS = 17.74716 + 2.07781(DREB) + 0.21408(PFD) + 1.79778(STL) - 1.04321(TOV) + 0.73092(PF)
+
+Add order: DREB + PFD + STL + TOV + PF
+
+Not included: BLKA, BLK, OREB
+
+Final cP: 7.6182 (close to k+1)
+
+Max Residual: 13.2867
+
+Median Residual: -0.0811
+
+Min Residual: -11.5661
+
+Adjusted R-squared: 0.6633
+
+## BACKWARD ELIMINATION
+
+```{r}
+#BACKWARD 
+full=lm(PTS~.,data=stats)
+MSE=(summary(full)$sigma^2)
+step(full,scale=MSE,direction="backward")
+qqnorm(model$residuals)
+summary(model)
+```
+
+## BACKWARD ELIMINATION SUMMARY
+
+PTS = 17.74716 + 2.07781(DREB) + 0.21408(PFD) + 1.79778(STL) - 1.04321(TOV) + 0.73092(PF)
+
+Removed: OREB, BLK, BLKA
+
+Final cP: 7.6182 (close to k+1)
+
+Max Residual: 13.2867
+
+Median Residual: -0.0811
+
+Min Residual: -11.5661
+
+Adjusted R-squared: 0.6633
+
+## STEPWISE REGRESSION
+
+```{r}
+full=lm(PTS~.,data=stats)
+none=lm(PTS~1,data=stats)
+MSE=(summary(full)$sigma^2)
+step(none,scope=formula(full),scale=MSE)
+qqnorm(model$residuals)
+summary(model)
+```
+
+## STEPWISE REGRESSION SUMMARY
+
+Same as forward selection
+
+## BEST SUBSETS 
+
+```{r}
+all=regsubsets(PTS~.,data=stats)
+summaryHH(all)
+```
